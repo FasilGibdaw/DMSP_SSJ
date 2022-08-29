@@ -15,13 +15,18 @@ import requests
 
 
 def main():
-    file = 'https://cdaweb.gsfc.nasa.gov/pub/data/dmsp/dmspf18/ssj/precipitating-electrons-ions/2012/dmsp-f18_ssj_precipitating-electrons-ions_20120101_v1.1.1.cdf'
-    r = requests.get(file, allow_redirects=True)
     fname = 'dmsp-f18_ssj_precipitating-electrons-ions_20120101_v1.1.1.cdf'
-    open(fname, 'wb').write(r.content)
-    D = dmsp_reader(fname, channel=9)
-    x, y, grided_data = dmsp_grid(D)
-    dmsp_polar_plot(x, y, grided_data)
+    try:
+        D = dmsp_reader(fname, channel=9)
+        x, y, grided_data = dmsp_grid(D)
+        dmsp_polar_plot(x, y, grided_data)
+    except:
+        file = 'https://cdaweb.gsfc.nasa.gov/pub/data/dmsp/dmspf18/ssj/precipitating-electrons-ions/2012/dmsp-f18_ssj_precipitating-electrons-ions_20120101_v1.1.1.cdf'
+        r = requests.get(file, allow_redirects=True)
+        open(fname, 'wb').write(r.content)
+        D = dmsp_reader(fname, channel=9)
+        x, y, grided_data = dmsp_grid(D)
+        dmsp_polar_plot(x, y, grided_data)
 
 
 def dmsp_reader(fname, channel=1):
