@@ -10,6 +10,7 @@ import numpy as np
 import glob
 import requests
 import warnings
+import matplotlib.ticker as mticker
 # files=glob.glob('*.cdf')
 # files.sort()
 # fname=files[100]
@@ -92,23 +93,38 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data):
     fig.subplots_adjust(bottom=0.05, top=0.95,
                         left=0.04, right=0.95, wspace=0.02)
     # Limit the map to -60 degrees latitude and below.
-    ax1.set_extent([-180, 180, 90, 40], ccrs.PlateCarree())
-    ax1.gridlines()
+    # ax1.set_extent([-180, 180, 90, 40], ccrs.PlateCarree())
+    # ax1.gridlines()
+
     theta = np.linspace(0, 2*np.pi, 100)
     center, radius = [0.5, 0.5], 0.5
     verts = np.vstack([np.sin(theta), np.cos(theta)]).T
     circle = mpath.Path(verts * radius + center)
     ax1.set_boundary(circle, transform=ax1.transAxes)
+
     c = ax1.pcolor(x*15, y, np.log10(egrided_data),
                    transform=ccrs.PlateCarree(), cmap='jet', vmin=4, vmax=8)
+
+    gl = ax1.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                       linewidth=1, color='black', alpha=0.3, linestyle='--')
+
+    ax1.set_extent([-180, 180, 40, 90], crs=ccrs.PlateCarree())
+    xx = np.arange(-180, 180, 45)
+    gl.xlocator = mticker.FixedLocator(xx)
+
+    #labels = ['0', '3', '6', '9', '12', '15', '18', '21']
+    # ax1.xaxis.set_major_locator(mticker.FixedLocator(xx))
+    # ax1.xaxis.set_major_formatter(mticker.FixedFormatter(labels))
+    #gl.right_labels = gl.left_labels = gl.top_labels = True
+    # ax1.axis('off')
     fig.colorbar(c)
 
     ax2 = fig.add_subplot(1, 2, 2, projection=ccrs.NorthPolarStereo())
     fig.subplots_adjust(bottom=0.05, top=0.95,
                         left=0.04, right=0.95, wspace=0.02)
     # Limit the map to -60 degrees latitude and below.
-    ax2.set_extent([-180, 180, 90, 40], ccrs.PlateCarree())
-    ax2.gridlines()
+    # ax2.set_extent([-180, 180, 90, 40], ccrs.PlateCarree())
+    # ax2.gridlines()
     theta = np.linspace(0, 2*np.pi, 100)
     center, radius = [0.5, 0.5], 0.5
     verts = np.vstack([np.sin(theta), np.cos(theta)]).T
@@ -116,6 +132,12 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data):
     ax2.set_boundary(circle, transform=ax2.transAxes)
     c = ax2.pcolor(x*15, y, np.log10(igrided_data),
                    transform=ccrs.PlateCarree(), cmap='jet', vmin=4, vmax=8)
+    gl = ax2.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                       linewidth=1, color='black', alpha=0.3, linestyle='--')
+
+    ax2.set_extent([-180, 180, 40, 90], crs=ccrs.PlateCarree())
+    xx = np.arange(-180, 180, 45)
+    gl.xlocator = mticker.FixedLocator(xx)
     fig.colorbar(c)
     # ax1.add_feature(cfeature.LAND)
     # ax1.add_feature(cfeature.OCEAN)
