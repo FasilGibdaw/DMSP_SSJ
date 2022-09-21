@@ -16,20 +16,26 @@ import matplotlib.ticker as mticker
 # fname=files[100]
 warnings.filterwarnings("ignore")
 
+ch = 1
+
+ch_energies = [30000., 20400., 13900.,  9450.,  6460.,  4400.,  3000.,  2040.,
+               1392.,   949.,   646.,   440.,   300.,   204.,   139.,    95.,
+               65.,    44.,    30.]
+
 
 def main():
     fname = 'dmsp-f18_ssj_precipitating-electrons-ions_20120101_v1.1.1.cdf'
     try:
-        D = dmsp_reader(fname, channel=9)
+        D = dmsp_reader(fname, channel=ch)
         x, y, egrided_data, igrided_data = dmsp_grid(D)
-        dmsp_polar_plot(x, y, egrided_data, igrided_data)
+        dmsp_polar_plot(x, y, egrided_data, igrided_data, savefig=True)
     except:
         file = 'https://cdaweb.gsfc.nasa.gov/pub/data/dmsp/dmspf18/ssj/precipitating-electrons-ions/2012/dmsp-f18_ssj_precipitating-electrons-ions_20120101_v1.1.1.cdf'
         r = requests.get(file, allow_redirects=True)
         open(fname, 'wb').write(r.content)
         D = dmsp_reader(fname, channel=9)
         x, y, egrided_data, igrided_data = dmsp_grid(D)
-        dmsp_polar_plot(x, y, egrided_data, igrided_data)
+        dmsp_polar_plot(x, y, egrided_data, igrided_data, savefig=True)
 
 
 def dmsp_reader(fname, channel=1):
@@ -86,8 +92,8 @@ def dmsp_grid(D):
     return x, y, egrided_data, igrided_data
 
 
-def dmsp_polar_plot(x, y, egrided_data, igrided_data):
-    fig = plt.figure(figsize=[10, 5])
+def dmsp_polar_plot(x, y, egrided_data, igrided_data, savefig=False):
+    fig = plt.figure(figsize=[12, 5])
     #ax1 = fig.add_subplot(1, 2, 1, projection=ccrs.SouthPolarStereo())
     ax1 = fig.add_subplot(1, 2, 1, projection=ccrs.NorthPolarStereo())
     fig.subplots_adjust(bottom=0.05, top=0.95,
@@ -105,17 +111,29 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data):
     c = ax1.pcolor(x*15, y, np.log10(egrided_data),
                    transform=ccrs.PlateCarree(), cmap='jet', vmin=4, vmax=8)
 
-    gl = ax1.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+    gl = ax1.gridlines(crs=ccrs.PlateCarree(), draw_labels=False,
                        linewidth=1, color='black', alpha=0.3, linestyle='--')
-
     ax1.set_extent([-180, 180, 40, 90], crs=ccrs.PlateCarree())
+    yticks = list(np.arange(40, 90, 15))
     xx = np.arange(-180, 180, 45)
     gl.xlocator = mticker.FixedLocator(xx)
+    ax1.text(0.485, -0.04, '0', transform=ax1.transAxes)
+    ax1.text(0.86, 0.11, '3', rotation=45, transform=ax1.transAxes)
+    ax1.text(1.01, 0.485, '6', transform=ax1.transAxes)
+    ax1.text(0.86, 0.86, '9', rotation=45, transform=ax1.transAxes)
+    ax1.text(0.485, 1.02, '12', transform=ax1.transAxes)
+    ax1.text(0.1, 0.86, '15', rotation=45, transform=ax1.transAxes)
+    ax1.text(-0.05, 0.485, '18', transform=ax1.transAxes)
+    ax1.text(0.1, 0.1, '21', rotation=45, transform=ax1.transAxes)
+    ax1.text(0.5, 0.47, '90', transform=ax1.transAxes)
+    ax1.text(0.5, 0.4, '80', transform=ax1.transAxes)
+    ax1.text(0.5, 0.3, '70', transform=ax1.transAxes)
+    ax1.text(0.5, 0.2, '60', transform=ax1.transAxes)
+    ax1.text(0.5, 0.1, '50', transform=ax1.transAxes)
+    ax1.text(0.5, 0., '40', transform=ax1.transAxes)
+    ax1.text(0.75, 0.95, 'Electron diff. Eflux \n at ' +
+             str(ch_energies[ch]/1000) + 'KeV', transform=ax1.transAxes)
 
-    #labels = ['0', '3', '6', '9', '12', '15', '18', '21']
-    # ax1.xaxis.set_major_locator(mticker.FixedLocator(xx))
-    # ax1.xaxis.set_major_formatter(mticker.FixedFormatter(labels))
-    #gl.right_labels = gl.left_labels = gl.top_labels = True
     # ax1.axis('off')
     fig.colorbar(c)
 
@@ -123,8 +141,7 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data):
     fig.subplots_adjust(bottom=0.05, top=0.95,
                         left=0.04, right=0.95, wspace=0.02)
     # Limit the map to -60 degrees latitude and below.
-    # ax2.set_extent([-180, 180, 90, 40], ccrs.PlateCarree())
-    # ax2.gridlines()
+    ax2.set_extent([-180, 180, 90, 40], ccrs.PlateCarree())
     theta = np.linspace(0, 2*np.pi, 100)
     center, radius = [0.5, 0.5], 0.5
     verts = np.vstack([np.sin(theta), np.cos(theta)]).T
@@ -132,31 +149,35 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data):
     ax2.set_boundary(circle, transform=ax2.transAxes)
     c = ax2.pcolor(x*15, y, np.log10(igrided_data),
                    transform=ccrs.PlateCarree(), cmap='jet', vmin=4, vmax=8)
-    gl = ax2.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+    gl = ax2.gridlines(crs=ccrs.PlateCarree(), draw_labels=False,
                        linewidth=1, color='black', alpha=0.3, linestyle='--')
-
     ax2.set_extent([-180, 180, 40, 90], crs=ccrs.PlateCarree())
+    yticks = list(np.arange(40, 90, 15))
     xx = np.arange(-180, 180, 45)
     gl.xlocator = mticker.FixedLocator(xx)
+
+    ax2.text(0.485, -0.04, '0', transform=ax2.transAxes)
+    ax2.text(0.86, 0.11, '3', rotation=45, transform=ax2.transAxes)
+    ax2.text(1.01, 0.485, '6', transform=ax2.transAxes)
+    ax2.text(0.86, 0.86, '9', rotation=45, transform=ax2.transAxes)
+    ax2.text(0.485, 1.02, '12', transform=ax2.transAxes)
+    ax2.text(0.1, 0.86, '15', rotation=45, transform=ax2.transAxes)
+    ax2.text(-0.05, 0.485, '18', transform=ax2.transAxes)
+    ax2.text(0.1, 0.1, '21', rotation=45, transform=ax2.transAxes)
+
+    ax2.text(0.5, 0.47, '90', transform=ax2.transAxes)
+    ax2.text(0.5, 0.4, '80', transform=ax2.transAxes)
+    ax2.text(0.5, 0.3, '70', transform=ax2.transAxes)
+    ax2.text(0.5, 0.2, '60', transform=ax2.transAxes)
+    ax2.text(0.5, 0.1, '50', transform=ax2.transAxes)
+    ax2.text(0.5, 0., '40', transform=ax2.transAxes)
+
+    ax2.text(0.75, 0.95, 'Proton diff. Eflux \n at ' +
+             str(ch_energies[ch]/1000) + 'KeV', transform=ax2.transAxes)
     fig.colorbar(c)
-    # ax1.add_feature(cfeature.LAND)
-    # ax1.add_feature(cfeature.OCEAN)
-    # ax1.gridlines()
 
-    # ax2.add_feature(cfeature.LAND)
-    # ax2.add_feature(cfeature.OCEAN)
-    # Compute a circle in axes coordinates, which we can use as a boundary
-    # for the map. We can pan/zoom as much as we like - the boundary will be
-    # permanently circular.
-
-    # ax2.pcolor(mlt['MLT'],la['La'],mat['avPrec'])
-
-    #c=ax2.pcolor(np.transpose(xv),np.transpose(yv),np.log10(pp),transform=ccrs.PlateCarree(),cmap='coolwarm',vmin=4, vmax=8)
-
-    # ti = datetime.strptime(fname[-19:-11], '%Y%m%d').date()
-    # sat = fname[0:8]
-    # text(0.1, 1, sat, ha='center', va='center', transform=ax2.transAxes)
-    # ax2.set_title(ti)
+    if savefig == True:
+        plt.savefig('DMSP at '+str(ch_energies[ch]/1000) + 'KeV'+'.png')
     plt.show()
 
 
