@@ -148,7 +148,7 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=1, savefig=False):
     circle = mpath.Path(verts * radius + center)
     ax2.set_boundary(circle, transform=ax2.transAxes)
     c = ax2.pcolor(x*15, y, np.log10(igrided_data),
-                   transform=ccrs.PlateCarree(), cmap='jet', vmin=4, vmax=6)
+                   transform=ccrs.PlateCarree(), cmap='jet', vmin=4, vmax=8)
     gl = ax2.gridlines(crs=ccrs.PlateCarree(), draw_labels=False,
                        linewidth=1, color='black', alpha=0.3, linestyle='--')
     ax2.set_extent([-180, 180, 40, 90], crs=ccrs.PlateCarree())
