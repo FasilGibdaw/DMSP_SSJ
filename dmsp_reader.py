@@ -16,7 +16,6 @@ import matplotlib.ticker as mticker
 # fname=files[100]
 warnings.filterwarnings("ignore")
 
-ch = 1
 
 ch_energies = [30000., 20400., 13900.,  9450.,  6460.,  4400.,  3000.,  2040.,
                1392.,   949.,   646.,   440.,   300.,   204.,   139.,    95.,
@@ -25,6 +24,7 @@ ch_energies = [30000., 20400., 13900.,  9450.,  6460.,  4400.,  3000.,  2040.,
 
 def main():
     fname = 'dmsp-f18_ssj_precipitating-electrons-ions_20120101_v1.1.1.cdf'
+    ch = 1
     try:
         D = dmsp_reader(fname, channel=ch)
         x, y, egrided_data, igrided_data = dmsp_grid(D)
@@ -92,7 +92,7 @@ def dmsp_grid(D):
     return x, y, egrided_data, igrided_data
 
 
-def dmsp_polar_plot(x, y, egrided_data, igrided_data, savefig=False):
+def dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=1, savefig=False):
     fig = plt.figure(figsize=[12, 5])
     #ax1 = fig.add_subplot(1, 2, 1, projection=ccrs.SouthPolarStereo())
     ax1 = fig.add_subplot(1, 2, 1, projection=ccrs.NorthPolarStereo())
@@ -148,7 +148,7 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data, savefig=False):
     circle = mpath.Path(verts * radius + center)
     ax2.set_boundary(circle, transform=ax2.transAxes)
     c = ax2.pcolor(x*15, y, np.log10(igrided_data),
-                   transform=ccrs.PlateCarree(), cmap='jet', vmin=4, vmax=8)
+                   transform=ccrs.PlateCarree(), cmap='jet', vmin=4, vmax=6)
     gl = ax2.gridlines(crs=ccrs.PlateCarree(), draw_labels=False,
                        linewidth=1, color='black', alpha=0.3, linestyle='--')
     ax2.set_extent([-180, 180, 40, 90], crs=ccrs.PlateCarree())
