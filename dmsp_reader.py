@@ -39,24 +39,21 @@ def main():
 
 
 def dmsp_reader(fname, channel=1):
-    '''reads DMSP cdf file from https://cdaweb.gsfc.nasa.gov/pub/data/dmsp/'''
     cdf_file = cdflib.CDF(fname)
-    eflux = cdf_file.varget("ELE_DIFF_ENERGY_FLUX")
-    iflux = cdf_file.varget('ION_DIFF_ENERGY_FLUX')
-    ch_energy = cdf_file.varget("CHANNEL_ENERGIES")
-    mlt = cdf_file.varget("SC_AACGM_LTIME")
-    mlat = cdf_file.varget("SC_AACGM_LAT")
-    mlon = cdf_file.varget("SC_AACGM_LON")
-    epoch = cdf_file.varget("Epoch")
-    ind = np.where(mlat > 40)
-    # flux from specified channel (30keV, 20keV --- 30eV) order
+    eflux, iflux, ch_energy, mlt, mlat, mlon, epoch = [cdf_file[var][()] for var in
+                                                       ["ELE_DIFF_ENERGY_FLUX",
+                                                        "ION_DIFF_ENERGY_FLUX",
+                                                        "CHANNEL_ENERGIES",
+                                                        "SC_AACGM_LTIME",
+                                                        "SC_AACGM_LAT",
+                                                        "SC_AACGM_LON",
+                                                        "Epoch"]]
+    ind = mlat > 40
     eData = eflux[ind, channel]
     iData = iflux[ind, channel]
-
-    # MLT=mlt[ind]
-    # MLAT=mlat[ind]
     MLON = mlon[ind]
     EPOCH = epoch[ind]
+
     return np.vstack([mlt[ind], mlat[ind], eData, iData]).T
 
 
