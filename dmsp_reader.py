@@ -1,19 +1,17 @@
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
-import cartopy.feature as cfeature
+#import cartopy.feature as cfeature
 import cartopy.crs as ccrs
 from datetime import datetime
 from matplotlib.pyplot import text
 import pandas as pd
 import cdflib
 import numpy as np
-import glob
+#import glob
 import requests
 import warnings
 import matplotlib.ticker as mticker
-# files=glob.glob('*.cdf')
-# files.sort()
-# fname=files[100]
+
 warnings.filterwarnings("ignore")
 
 
@@ -63,9 +61,6 @@ index_labels = ['MLT', 'MLAT', 'ePrep', 'iPrep']
 def dmsp_grid(D):
     df = pd.DataFrame(D, columns=index_labels)
     df = df.round()
-    # data=df.sort_values(by=['MLT','MLAT'])
-    # df['MLT']=df['MLT'].round()
-    # df['MLAT']=df['MLAT'].round()
     f = df.groupby(['MLT', 'MLAT'])['ePrep', 'iPrep'].apply(
         lambda g: g.mean(skipna=True))
     f = f.reset_index()
@@ -114,20 +109,17 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=1, savefig=False):
     yticks = list(np.arange(40, 90, 15))
     xx = np.arange(-180, 180, 45)
     gl.xlocator = mticker.FixedLocator(xx)
-    ax1.text(0.485, -0.04, '0', transform=ax1.transAxes)
-    ax1.text(0.86, 0.11, '3', rotation=45, transform=ax1.transAxes)
-    ax1.text(1.01, 0.485, '6', transform=ax1.transAxes)
-    ax1.text(0.86, 0.86, '9', rotation=45, transform=ax1.transAxes)
-    ax1.text(0.485, 1.02, '12', transform=ax1.transAxes)
-    ax1.text(0.1, 0.86, '15', rotation=45, transform=ax1.transAxes)
-    ax1.text(-0.05, 0.485, '18', transform=ax1.transAxes)
-    ax1.text(0.1, 0.1, '21', rotation=45, transform=ax1.transAxes)
-    ax1.text(0.5, 0.47, '90', transform=ax1.transAxes)
-    ax1.text(0.5, 0.4, '80', transform=ax1.transAxes)
-    ax1.text(0.5, 0.3, '70', transform=ax1.transAxes)
-    ax1.text(0.5, 0.2, '60', transform=ax1.transAxes)
-    ax1.text(0.5, 0.1, '50', transform=ax1.transAxes)
-    ax1.text(0.5, 0., '40', transform=ax1.transAxes)
+    loc_x_mlt = [0.485,0.86,1.01,0.86,0.485,0.1,-0.05,0.1]
+    loc_y_mlt = [-0.04,0.11,0.485,0.86,1.02,0.86,0.485,0.1]
+    loc_x_lat = [0.5]*6
+    loc_y_lat = [0.47,0.4,0.3,0.2,0.1,0.]
+    mlt_label = [str(elem) for elem in np.arange(0,24,3)]
+    lat_label = [str(elem) for elem in np.arange(90,30,-10)]
+    for xmlt,ymlt,label_mlt in zip(loc_x_mlt,loc_y_mlt,mlt_label):
+        ax1.text(xmlt, ymlt, label_mlt, transform=ax1.transAxes)
+    for x_lat,ylat,label_lat in zip(loc_x_lat,loc_y_lat,lat_label):
+        ax1.text(x_lat, ylat, label_lat, transform=ax1.transAxes)
+        
     ax1.text(0.75, 0.95, 'Electron diff. Eflux \n at ' +
              str(ch_energies[ch]/1000) + 'KeV', transform=ax1.transAxes)
 
@@ -152,29 +144,16 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=1, savefig=False):
     yticks = list(np.arange(40, 90, 15))
     xx = np.arange(-180, 180, 45)
     gl.xlocator = mticker.FixedLocator(xx)
-
-    ax2.text(0.485, -0.04, '0', transform=ax2.transAxes)
-    ax2.text(0.86, 0.11, '3', rotation=45, transform=ax2.transAxes)
-    ax2.text(1.01, 0.485, '6', transform=ax2.transAxes)
-    ax2.text(0.86, 0.86, '9', rotation=45, transform=ax2.transAxes)
-    ax2.text(0.485, 1.02, '12', transform=ax2.transAxes)
-    ax2.text(0.1, 0.86, '15', rotation=45, transform=ax2.transAxes)
-    ax2.text(-0.05, 0.485, '18', transform=ax2.transAxes)
-    ax2.text(0.1, 0.1, '21', rotation=45, transform=ax2.transAxes)
-
-    ax2.text(0.5, 0.47, '90', transform=ax2.transAxes)
-    ax2.text(0.5, 0.4, '80', transform=ax2.transAxes)
-    ax2.text(0.5, 0.3, '70', transform=ax2.transAxes)
-    ax2.text(0.5, 0.2, '60', transform=ax2.transAxes)
-    ax2.text(0.5, 0.1, '50', transform=ax2.transAxes)
-    ax2.text(0.5, 0., '40', transform=ax2.transAxes)
-
+    for xmlt,ymlt,label_mlt in zip(loc_x_mlt,loc_y_mlt,mlt_label):
+        ax2.text(xmlt, ymlt, label_mlt, transform=ax2.transAxes)
+    for x_lat,ylat,label_lat in zip(loc_x_lat,loc_y_lat,lat_label):
+        ax2.text(x_lat, ylat, label_lat, transform=ax2.transAxes)
+    
     ax2.text(0.75, 0.95, 'Proton diff. Eflux \n at ' +
              str(ch_energies[ch]/1000) + 'KeV', transform=ax2.transAxes)
     fig.colorbar(c)
-
     if savefig == True:
-        plt.savefig('DMSP at '+str(ch_energies[ch]/1000) + 'KeV'+'.png')
+        plt.savefig('DMSP_at_'+str(ch_energies[ch]/1000) + 'KeV'+'.png')
     plt.show()
 
 
