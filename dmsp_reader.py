@@ -37,6 +37,15 @@ def main():
 
 
 def dmsp_reader(fname, channel=1):
+    """_summary_
+
+    Args:
+        fname (str)): (location + name) of the DMSP data
+        channel (int, optional): energy channel (0 to 18). Defaults to 1.
+
+    Returns:
+        array of N(observations) by 4 (magnetic local time, magnetic latitude, electron energy at channel, ion energy at channel)
+    """
     cdf_file = cdflib.CDF(fname)
     eflux, iflux, ch_energy, mlt, mlat, mlon, epoch = [cdf_file[var][()] for var in
                                                        ["ELE_DIFF_ENERGY_FLUX",
@@ -59,6 +68,14 @@ index_labels = ['MLT', 'MLAT', 'ePrep', 'iPrep']
 
 
 def dmsp_grid(D):
+    """_summary_
+
+    Args:
+        D (array)): array of N by M with 
+
+    Returns:
+        x, y grids and the grided data (electron and ion energies)
+    """
     df = pd.DataFrame(D, columns=index_labels)
     df = df.round()
     f = df.groupby(['MLT', 'MLAT'])['ePrep', 'iPrep'].apply(
@@ -85,14 +102,21 @@ def dmsp_grid(D):
 
 
 def dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=1, savefig=False):
+    """This plots the ion and electron energy on a specific channel (ch) on a given grid 
+
+    Args:
+        x (float): grided mlt
+        y (_type_): grided magentic latitude
+        egrided_data (_type_): electrons energy on the grid (from channel ch)
+        igrided_data (_type_): _description_
+        ch (int, optional): energy channels of DMSP (0 to 18) Defaults to 1.
+        savefig (bool, optional): save figure to current directory. Defaults to False.
+    """
     fig = plt.figure(figsize=[12, 5])
     #ax1 = fig.add_subplot(1, 2, 1, projection=ccrs.SouthPolarStereo())
     ax1 = fig.add_subplot(1, 2, 1, projection=ccrs.NorthPolarStereo())
     fig.subplots_adjust(bottom=0.05, top=0.95,
                         left=0.04, right=0.95, wspace=0.02)
-    # Limit the map to -60 degrees latitude and below.
-    # ax1.set_extent([-180, 180, 90, 40], ccrs.PlateCarree())
-    # ax1.gridlines()
 
     theta = np.linspace(0, 2*np.pi, 100)
     center, radius = [0.5, 0.5], 0.5
