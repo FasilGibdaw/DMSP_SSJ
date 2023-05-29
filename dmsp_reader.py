@@ -1,13 +1,13 @@
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
-#import cartopy.feature as cfeature
+# import cartopy.feature as cfeature
 import cartopy.crs as ccrs
 from datetime import datetime
 from matplotlib.pyplot import text
 import pandas as pd
 import cdflib
 import numpy as np
-#import glob
+# import glob
 import requests
 import warnings
 import matplotlib.ticker as mticker
@@ -25,7 +25,7 @@ def main():
     ch = 1
     try:
         D = dmsp_reader(fname, channel=ch)
-        x, y, egrided_data, igrided_data = dmsp_grid(D)
+        x, y, egrided_data, igrided_data = dmsp_grid(D, 2)
         dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=ch, savefig=True)
     except:
         file = 'https://cdaweb.gsfc.nasa.gov/pub/data/dmsp/dmspf18/ssj/precipitating-electrons-ions/2012/dmsp-f18_ssj_precipitating-electrons-ions_20120101_v1.1.1.cdf'
@@ -64,26 +64,35 @@ def dmsp_reader(fname, channel=1):
     return np.vstack([mlt[ind], mlat[ind], eData, iData]).T
 
 
+def round_off(number, reciprocal=2):
+    """Round a number to the closest half integer (reciprocal=2) or quarter (reciprocal=4)... etc
+    """
+    return round(number * reciprocal) / reciprocal
+
+
 index_labels = ['MLT', 'MLAT', 'ePrep', 'iPrep']
 
 
-def dmsp_grid(D):
+def dmsp_grid(D, reciprocal):
     """_summary_
 
     Args:
         D (array)): array of N by M with 
+        reciprocal(int): this can take only 1, 2, and 4... corresponding to (1 by 1), (0.5 by 0.5) and [0.25 by 0.25] (mlt, mlat) grid
 
     Returns:
         x, y grids and the grided data (electron and ion energies)
     """
     df = pd.DataFrame(D, columns=index_labels)
-    df = df.round()
+    df = df.apply(round_off, args=[reciprocal])
     f = df.groupby(['MLT', 'MLAT'])['ePrep', 'iPrep'].apply(
         lambda g: g.mean(skipna=True))
     f = f.reset_index()
 
-    lati = np.arange(f['MLAT'].min(), f['MLAT'].max()+1)
-    tt = np.arange(f['MLT'].min(), f['MLT'].max()+1)
+    lati = np.arange(f['MLAT'].min(), f['MLAT'].max() +
+                     (1/reciprocal), (1/reciprocal))
+    tt = np.arange(f['MLT'].min(), f['MLT'].max() +
+                   (1/reciprocal), (1/reciprocal))
     x, y = np.meshgrid(tt, lati)
 
     mlt = f['MLT']
@@ -113,7 +122,7 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=1, savefig=False):
         savefig (bool, optional): save figure to current directory. Defaults to False.
     """
     fig = plt.figure(figsize=[12, 5])
-    #ax1 = fig.add_subplot(1, 2, 1, projection=ccrs.SouthPolarStereo())
+    # ax1 = fig.add_subplot(1, 2, 1, projection=ccrs.SouthPolarStereo())
     ax1 = fig.add_subplot(1, 2, 1, projection=ccrs.NorthPolarStereo())
     fig.subplots_adjust(bottom=0.05, top=0.95,
                         left=0.04, right=0.95, wspace=0.02)
@@ -133,17 +142,17 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=1, savefig=False):
     yticks = list(np.arange(40, 90, 15))
     xx = np.arange(-180, 180, 45)
     gl.xlocator = mticker.FixedLocator(xx)
-    loc_x_mlt = [0.485,0.86,1.01,0.86,0.485,0.1,-0.05,0.1]
-    loc_y_mlt = [-0.04,0.11,0.485,0.86,1.02,0.86,0.485,0.1]
+    loc_x_mlt = [0.485, 0.86, 1.01, 0.86, 0.485, 0.1, -0.05, 0.1]
+    loc_y_mlt = [-0.04, 0.11, 0.485, 0.86, 1.02, 0.86, 0.485, 0.1]
     loc_x_lat = [0.5]*6
-    loc_y_lat = [0.47,0.4,0.3,0.2,0.1,0.]
-    mlt_label = [str(elem) for elem in np.arange(0,24,3)]
-    lat_label = [str(elem) for elem in np.arange(90,30,-10)]
-    for xmlt,ymlt,label_mlt in zip(loc_x_mlt,loc_y_mlt,mlt_label):
+    loc_y_lat = [0.47, 0.4, 0.3, 0.2, 0.1, 0.]
+    mlt_label = [str(elem) for elem in np.arange(0, 24, 3)]
+    lat_label = [str(elem) for elem in np.arange(90, 30, -10)]
+    for xmlt, ymlt, label_mlt in zip(loc_x_mlt, loc_y_mlt, mlt_label):
         ax1.text(xmlt, ymlt, label_mlt, transform=ax1.transAxes)
-    for x_lat,ylat,label_lat in zip(loc_x_lat,loc_y_lat,lat_label):
+    for x_lat, ylat, label_lat in zip(loc_x_lat, loc_y_lat, lat_label):
         ax1.text(x_lat, ylat, label_lat, transform=ax1.transAxes)
-        
+
     ax1.text(0.75, 0.95, 'Electron diff. Eflux \n at ' +
              str(ch_energies[ch]/1000) + 'KeV', transform=ax1.transAxes)
 
@@ -168,16 +177,17 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=1, savefig=False):
     yticks = list(np.arange(40, 90, 15))
     xx = np.arange(-180, 180, 45)
     gl.xlocator = mticker.FixedLocator(xx)
-    for xmlt,ymlt,label_mlt in zip(loc_x_mlt,loc_y_mlt,mlt_label):
+    for xmlt, ymlt, label_mlt in zip(loc_x_mlt, loc_y_mlt, mlt_label):
         ax2.text(xmlt, ymlt, label_mlt, transform=ax2.transAxes)
-    for x_lat,ylat,label_lat in zip(loc_x_lat,loc_y_lat,lat_label):
+    for x_lat, ylat, label_lat in zip(loc_x_lat, loc_y_lat, lat_label):
         ax2.text(x_lat, ylat, label_lat, transform=ax2.transAxes)
-    
+
     ax2.text(0.75, 0.95, 'Proton diff. Eflux \n at ' +
              str(ch_energies[ch]/1000) + 'KeV', transform=ax2.transAxes)
     fig.colorbar(c)
     if savefig == True:
-        plt.savefig('DMSP_at_'+str(ch_energies[ch]/1000) + 'KeV'+'.png')
+        plt.savefig(
+            'DMSP_at_'+str(ch_energies[ch]/1000) + 'KeV'+'.png', dpi=800)
     plt.show()
 
 
