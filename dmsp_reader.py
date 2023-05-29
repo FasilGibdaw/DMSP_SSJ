@@ -121,7 +121,7 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=1, savefig=False):
         ch (int, optional): energy channels of DMSP (0 to 18) Defaults to 1.
         savefig (bool, optional): save figure to current directory. Defaults to False.
     """
-    fig = plt.figure(figsize=[12, 5])
+    fig = plt.figure(figsize=[13, 5])
     # ax1 = fig.add_subplot(1, 2, 1, projection=ccrs.SouthPolarStereo())
     ax1 = fig.add_subplot(1, 2, 1, projection=ccrs.NorthPolarStereo())
     fig.subplots_adjust(bottom=0.05, top=0.95,
@@ -153,11 +153,10 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=1, savefig=False):
     for x_lat, ylat, label_lat in zip(loc_x_lat, loc_y_lat, lat_label):
         ax1.text(x_lat, ylat, label_lat, transform=ax1.transAxes)
 
-    ax1.text(0.75, 0.95, 'Electron diff. Eflux \n at ' +
-             str(ch_energies[ch]/1000) + 'KeV', transform=ax1.transAxes)
+    ax1.text(0.85, 0.95, str(ch_energies[ch]/1000) + 'KeV', transform=ax1.transAxes)
 
     # ax1.axis('off')
-    fig.colorbar(c)
+    fig.colorbar(c,label='Log10 (Electron diff. energy flux)')
 
     ax2 = fig.add_subplot(1, 2, 2, projection=ccrs.NorthPolarStereo())
     fig.subplots_adjust(bottom=0.05, top=0.95,
@@ -182,9 +181,8 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=1, savefig=False):
     for x_lat, ylat, label_lat in zip(loc_x_lat, loc_y_lat, lat_label):
         ax2.text(x_lat, ylat, label_lat, transform=ax2.transAxes)
 
-    ax2.text(0.75, 0.95, 'Proton diff. Eflux \n at ' +
-             str(ch_energies[ch]/1000) + 'KeV', transform=ax2.transAxes)
-    fig.colorbar(c)
+    ax2.text(0.85, 0.95, str(ch_energies[ch]/1000) + 'KeV', transform=ax2.transAxes)
+    fig.colorbar(c,label='Log10 (Proton diff. energy flux)')
     if savefig == True:
         plt.savefig(
             'DMSP_at_'+str(ch_energies[ch]/1000) + 'KeV'+'.png', dpi=800)
