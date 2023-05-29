@@ -31,7 +31,7 @@ def main():
         file = 'https://cdaweb.gsfc.nasa.gov/pub/data/dmsp/dmspf18/ssj/precipitating-electrons-ions/2012/dmsp-f18_ssj_precipitating-electrons-ions_20120101_v1.1.1.cdf'
         r = requests.get(file, allow_redirects=True)
         open(fname, 'wb').write(r.content)
-        D = dmsp_reader(fname, channel=9)
+        D = dmsp_reader(fname, channel=1)
         x, y, egrided_data, igrided_data = dmsp_grid(D)
         dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=ch, savefig=True)
 
