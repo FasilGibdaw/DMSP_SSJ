@@ -21,7 +21,7 @@ ch_energies = [30000., 20400., 13900.,  9450.,  6460.,  4400.,  3000.,  2040.,
 
 
 def main():
-    fname = 'dmsp-f18_ssj_precipitating-electrons-ions_20120101_v1.1.1.cdf'
+    fname = './data/dmsp-f18_ssj_precipitating-electrons-ions_20120101_v1.1.1.cdf'
     ch = 1
     try:
         D = dmsp_reader(fname, channel=ch)
@@ -32,7 +32,7 @@ def main():
         r = requests.get(file, allow_redirects=True)
         open(fname, 'wb').write(r.content)
         D = dmsp_reader(fname, channel=1)
-        x, y, egrided_data, igrided_data = dmsp_grid(D,2)
+        x, y, egrided_data, igrided_data = dmsp_grid(D, 2)
         dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=ch, savefig=True)
 
 
@@ -153,10 +153,11 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=1, savefig=False):
     for x_lat, ylat, label_lat in zip(loc_x_lat, loc_y_lat, lat_label):
         ax1.text(x_lat, ylat, label_lat, transform=ax1.transAxes)
 
-    ax1.text(0.85, 0.95, str(ch_energies[ch]/1000) + 'KeV', transform=ax1.transAxes)
+    ax1.text(0.85, 0.95, str(
+        ch_energies[ch]/1000) + 'KeV', transform=ax1.transAxes)
 
     # ax1.axis('off')
-    fig.colorbar(c,label='Log10 (Electron diff. energy flux)')
+    fig.colorbar(c, label='Log10 (Electron diff. energy flux)')
 
     ax2 = fig.add_subplot(1, 2, 2, projection=ccrs.NorthPolarStereo())
     fig.subplots_adjust(bottom=0.05, top=0.95,
@@ -181,8 +182,9 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=1, savefig=False):
     for x_lat, ylat, label_lat in zip(loc_x_lat, loc_y_lat, lat_label):
         ax2.text(x_lat, ylat, label_lat, transform=ax2.transAxes)
 
-    ax2.text(0.85, 0.95, str(ch_energies[ch]/1000) + 'KeV', transform=ax2.transAxes)
-    fig.colorbar(c,label='Log10 (Proton diff. energy flux)')
+    ax2.text(0.85, 0.95, str(
+        ch_energies[ch]/1000) + 'KeV', transform=ax2.transAxes)
+    fig.colorbar(c, label='Log10 (Proton diff. energy flux)')
     if savefig == True:
         plt.savefig(
             'DMSP_at_'+str(ch_energies[ch]/1000) + 'KeV'+'.png', dpi=800)
