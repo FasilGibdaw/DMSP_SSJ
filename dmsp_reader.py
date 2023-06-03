@@ -32,7 +32,7 @@ def main():
         r = requests.get(file, allow_redirects=True)
         open(fname, 'wb').write(r.content)
         D = dmsp_reader(fname, channel=1)
-        x, y, egrided_data, igrided_data = dmsp_grid(D)
+        x, y, egrided_data, igrided_data = dmsp_grid(D,2)
         dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=ch, savefig=True)
 
 
