@@ -128,6 +128,11 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data, hemisphere='North', ch=1, 
         ch (int, optional): energy channels of DMSP (0 to 18) Defaults to 1.
         savefig (bool, optional): save figure to the current directory. Defaults to False.
     """
+    loc_x_mlt = [0.485, 0.86, 1.01, 0.86, 0.485, 0.1, -0.05, 0.1]
+    loc_y_mlt = [-0.04, 0.11, 0.485, 0.86, 1.02, 0.86, 0.485, 0.1]
+    loc_x_lat = [0.5] * 6
+    loc_y_lat = [0.47, 0.4, 0.3, 0.2, 0.1, 0.]
+    mlt_label = [str(elem) for elem in np.arange(0, 24, 3)]
     fig = plt.figure(figsize=[13, 5])
 
     if hemisphere == 'South':
@@ -146,17 +151,14 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data, hemisphere='North', ch=1, 
     verts = np.vstack([np.sin(theta), np.cos(theta)]).T
     circle = mpath.Path(verts * radius + center)
 
-    loc_x_mlt = [0.485, 0.86, 1.01, 0.86, 0.485, 0.1, -0.05, 0.1]
-    loc_y_mlt = [-0.04, 0.11, 0.485, 0.86, 1.02, 0.86, 0.485, 0.1]
-    loc_x_lat = [0.5] * 6
-    loc_y_lat = [0.47, 0.4, 0.3, 0.2, 0.1, 0.]
 
-    mlt_label = [str(elem) for elem in np.arange(0, 24, 3)]
 
     for ax in [ax1, ax2]:
         ax.set_boundary(circle, transform=ax.transAxes)
         ax.set_extent([-180, 180, 40, 90] if hemisphere ==
                       'North' else [-180, 180, -40, -90], ccrs.PlateCarree())
+        if hemisphere == 'South':
+            ax.invert_yaxis()  # Flip the figure upside down
 
         c = ax.pcolor(x * 15, y, np.log10(egrided_data if ax == ax1 else igrided_data),
                       transform=ccrs.PlateCarree(), cmap='jet', vmin=4, vmax=8)
