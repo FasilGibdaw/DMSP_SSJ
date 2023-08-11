@@ -36,7 +36,7 @@ def main():
         dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=ch, savefig=True)
 
 
-def dmsp_reader(fname, channel=1):
+def dmsp_reader(fname, channel=1, hemisphere='North'):
     """_summary_
 
     Args:
@@ -55,11 +55,18 @@ def dmsp_reader(fname, channel=1):
                                                         "SC_AACGM_LAT",
                                                         "SC_AACGM_LON",
                                                         "Epoch"]]
-    ind = mlat > 40
-    eData = eflux[ind, channel]
-    iData = iflux[ind, channel]
-    MLON = mlon[ind]
-    EPOCH = epoch[ind]
+    if hemisphere == 'South':
+        ind = mlat < -40
+        eData = eflux[ind, channel]
+        iData = iflux[ind, channel]
+        MLON = mlon[ind]
+        EPOCH = epoch[ind]
+    else:
+        ind = mlat > 40
+        eData = eflux[ind, channel]
+        iData = iflux[ind, channel]
+        MLON = mlon[ind]
+        EPOCH = epoch[ind]
 
     return np.vstack([mlt[ind], mlat[ind], eData, iData]).T
 
@@ -110,84 +117,80 @@ def dmsp_grid(D, reciprocal):
     return x, y, egrided_data, igrided_data
 
 
-def dmsp_polar_plot(x, y, egrided_data, igrided_data, ch=1, savefig=False):
-    """This plots the ion and electron energy on a specific channel (ch) on a given grid 
+def dmsp_polar_plot(x, y, egrided_data, igrided_data, hemisphere='North', ch=1, savefig=False):
+    """This function plots ion and electron energy on a specific channel (ch) on a given grid.
 
     Args:
-        x (float): grided mlt
-        y (_type_): grided magentic latitude
-        egrided_data (_type_): electrons energy on the grid (from channel ch)
+        x (float): gridded mlt
+        y (_type_): gridded magnetic latitude
+        egrided_data (_type_): electrons' energy on the grid (from channel ch)
         igrided_data (_type_): _description_
         ch (int, optional): energy channels of DMSP (0 to 18) Defaults to 1.
-        savefig (bool, optional): save figure to current directory. Defaults to False.
+        savefig (bool, optional): save figure to the current directory. Defaults to False.
     """
     fig = plt.figure(figsize=[13, 5])
-    # ax1 = fig.add_subplot(1, 2, 1, projection=ccrs.SouthPolarStereo())
-    ax1 = fig.add_subplot(1, 2, 1, projection=ccrs.NorthPolarStereo())
-    fig.subplots_adjust(bottom=0.05, top=0.95,
-                        left=0.04, right=0.95, wspace=0.02)
 
-    theta = np.linspace(0, 2*np.pi, 100)
+    if hemisphere == 'South':
+        projection = ccrs.SouthPolarStereo()
+    else:
+        projection = ccrs.NorthPolarStereo()
+
+    ax1 = fig.add_subplot(1, 2, 1, projection=projection)
+    ax2 = fig.add_subplot(1, 2, 2, projection=projection)
+
+    fig.subplots_adjust(bottom=0.05, top=0.95, left=0.04,
+                        right=0.95, wspace=0.02)
+
     center, radius = [0.5, 0.5], 0.5
+    theta = np.linspace(0, 2*np.pi, 100)
     verts = np.vstack([np.sin(theta), np.cos(theta)]).T
     circle = mpath.Path(verts * radius + center)
-    ax1.set_boundary(circle, transform=ax1.transAxes)
 
-    c = ax1.pcolor(x*15, y, np.log10(egrided_data),
-                   transform=ccrs.PlateCarree(), cmap='jet', vmin=4, vmax=8)
-
-    gl = ax1.gridlines(crs=ccrs.PlateCarree(), draw_labels=False,
-                       linewidth=1, color='black', alpha=0.3, linestyle='--')
-    ax1.set_extent([-180, 180, 40, 90], crs=ccrs.PlateCarree())
-    yticks = list(np.arange(40, 90, 15))
-    xx = np.arange(-180, 180, 45)
-    gl.xlocator = mticker.FixedLocator(xx)
     loc_x_mlt = [0.485, 0.86, 1.01, 0.86, 0.485, 0.1, -0.05, 0.1]
     loc_y_mlt = [-0.04, 0.11, 0.485, 0.86, 1.02, 0.86, 0.485, 0.1]
-    loc_x_lat = [0.5]*6
+    loc_x_lat = [0.5] * 6
     loc_y_lat = [0.47, 0.4, 0.3, 0.2, 0.1, 0.]
+
     mlt_label = [str(elem) for elem in np.arange(0, 24, 3)]
-    lat_label = [str(elem) for elem in np.arange(90, 30, -10)]
-    for xmlt, ymlt, label_mlt in zip(loc_x_mlt, loc_y_mlt, mlt_label):
-        ax1.text(xmlt, ymlt, label_mlt, transform=ax1.transAxes)
-    for x_lat, ylat, label_lat in zip(loc_x_lat, loc_y_lat, lat_label):
-        ax1.text(x_lat, ylat, label_lat, transform=ax1.transAxes)
 
-    ax1.text(0.85, 0.95, str(
-        ch_energies[ch]/1000) + 'KeV', transform=ax1.transAxes)
+    for ax in [ax1, ax2]:
+        ax.set_boundary(circle, transform=ax.transAxes)
+        ax.set_extent([-180, 180, 40, 90] if hemisphere ==
+                      'North' else [-180, 180, -40, -90], ccrs.PlateCarree())
 
-    # ax1.axis('off')
-    fig.colorbar(c, label='Log10 (Electron diff. energy flux)')
+        c = ax.pcolor(x * 15, y, np.log10(egrided_data if ax == ax1 else igrided_data),
+                      transform=ccrs.PlateCarree(), cmap='jet', vmin=4, vmax=8)
 
-    ax2 = fig.add_subplot(1, 2, 2, projection=ccrs.NorthPolarStereo())
-    fig.subplots_adjust(bottom=0.05, top=0.95,
-                        left=0.04, right=0.95, wspace=0.02)
-    # Limit the map to -60 degrees latitude and below.
-    ax2.set_extent([-180, 180, 90, 40], ccrs.PlateCarree())
-    theta = np.linspace(0, 2*np.pi, 100)
-    center, radius = [0.5, 0.5], 0.5
-    verts = np.vstack([np.sin(theta), np.cos(theta)]).T
-    circle = mpath.Path(verts * radius + center)
-    ax2.set_boundary(circle, transform=ax2.transAxes)
-    c = ax2.pcolor(x*15, y, np.log10(igrided_data),
-                   transform=ccrs.PlateCarree(), cmap='jet', vmin=4, vmax=8)
-    gl = ax2.gridlines(crs=ccrs.PlateCarree(), draw_labels=False,
-                       linewidth=1, color='black', alpha=0.3, linestyle='--')
-    ax2.set_extent([-180, 180, 40, 90], crs=ccrs.PlateCarree())
-    yticks = list(np.arange(40, 90, 15))
-    xx = np.arange(-180, 180, 45)
-    gl.xlocator = mticker.FixedLocator(xx)
-    for xmlt, ymlt, label_mlt in zip(loc_x_mlt, loc_y_mlt, mlt_label):
-        ax2.text(xmlt, ymlt, label_mlt, transform=ax2.transAxes)
-    for x_lat, ylat, label_lat in zip(loc_x_lat, loc_y_lat, lat_label):
-        ax2.text(x_lat, ylat, label_lat, transform=ax2.transAxes)
+        gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=False,
+                          linewidth=1, color='black', alpha=0.3, linestyle='--')
 
-    ax2.text(0.85, 0.95, str(
-        ch_energies[ch]/1000) + 'KeV', transform=ax2.transAxes)
-    fig.colorbar(c, label='Log10 (Proton diff. energy flux)')
-    if savefig == True:
+        xx = np.arange(-180, 180, 45)
+        gl.xlocator = mticker.FixedLocator(xx)
+
+        for xmlt, ymlt, label_mlt in zip(loc_x_mlt, loc_y_mlt, mlt_label):
+            ax.text(xmlt, ymlt, label_mlt, transform=ax.transAxes)
+
+        lat_label = [str(elem) for elem in np.arange(-90, -30, 10)]
+        if hemisphere == 'South':
+            yticks = list(np.arange(-40, -90, -15))
+        else:
+            yticks = list(np.arange(40, 90, 15))
+
+        for x_lat, ylat, label_lat in zip(loc_x_lat, loc_y_lat, lat_label):
+            ax.text(x_lat, ylat, label_lat, transform=ax.transAxes)
+
+        ax.text(0.85, 0.95, str(
+            ch_energies[ch] / 1000) + 'KeV', transform=ax.transAxes)
+        # ax.set_title('Log10 (Electron diff. energy flux)' if ax ==
+        #              ax1 else 'Log10 (Proton diff. energy flux)')
+
+        fig.colorbar(c, label='Log10 (Proton diff. energy flux)' if ax ==
+                     ax2 else 'Log10 (Electron diff. energy flux)')
+
+    if savefig:
         plt.savefig(
-            'DMSP_at_'+str(ch_energies[ch]/1000) + 'KeV'+'.png', dpi=800)
+            f'DMSP_at_{ch_energies[ch] / 1000}KeV_{hemisphere}.png', dpi=800)
+
     plt.show()
 
 
