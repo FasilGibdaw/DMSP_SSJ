@@ -137,8 +137,10 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data, hemisphere='North', ch=1, 
 
     if hemisphere == 'South':
         projection = ccrs.SouthPolarStereo()
+        lat_label = [str(elem) for elem in np.arange(-90, -30, 10)]
     else:
         projection = ccrs.NorthPolarStereo()
+        lat_label = [str(elem) for elem in np.arange(90, 30, -10)]
 
     ax1 = fig.add_subplot(1, 2, 1, projection=projection)
     ax2 = fig.add_subplot(1, 2, 2, projection=projection)
@@ -171,8 +173,7 @@ def dmsp_polar_plot(x, y, egrided_data, igrided_data, hemisphere='North', ch=1, 
 
         for xmlt, ymlt, label_mlt in zip(loc_x_mlt, loc_y_mlt, mlt_label):
             ax.text(xmlt, ymlt, label_mlt, transform=ax.transAxes)
-
-        lat_label = [str(elem) for elem in np.arange(-90, -30, 10)]
+   
         if hemisphere == 'South':
             yticks = list(np.arange(-40, -90, -15))
         else:
