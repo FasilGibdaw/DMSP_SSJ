@@ -1,3 +1,8 @@
+from urllib.parse import urljoin
+from bs4 import BeautifulSoup
+import requests
+from lompe.data_tools.dataloader import cross_track_los
+from scipy import interpolate
 import datetime as dt
 import pandas as pd
 import numpy as np
@@ -5,6 +10,8 @@ import xarray as xr
 import os
 import warnings
 from tables import NaturalNameWarning
+
+warnings.filterwarnings("ignore")
 
 
 def read_ssj(event, sat='all', basepath='./', tempfile_path='./', **madrigal_kwargs):
@@ -94,3 +101,68 @@ def read_ssj(event, sat='all', basepath='./', tempfile_path='./', **madrigal_kwa
                         ssj[idx], savefile, **madrigal_kwargs, format="netCDF4")
                 savefiles.append(savefile)
     return savefiles
+
+
+def download_dmsp_ssj(event, sat, tempfile_path='./', **madrigal_kwargs):
+    """ Download DMSP SSJ flux/energy data for a full day from Madrigal database.
+        using FTP-like acess at http://cedar.openmadrigal.org/ftp/
+
+    Args:
+        event (str): 
+            string on format 'yyyy-mm-dd' to specify time of event for model.
+        sat (int): 
+            Satellite ID for DMSP Block 5D satellite (16-19)
+        tempfile_path (str, optional): 
+            Path to dir where processed hdf files are placed. Default: './'
+        **madrigalkwargs (dict): 
+            needed to download data from MadrigalWeb (Madrigal needs user specifications through **madrigal_kwargs.)
+    Example usage:
+        event = '2014-07-13'
+        sat = 17
+        tempfile_path = '/Users/fasilkebede/Documents/'
+        madrigal_kwargs = {'user_fullname': 'First','user_email': 'name@host.com', 'user_affiliation': 'University'}
+
+    Returns:
+        savefile(str):
+            Path to hdf-file containing SSIES data for Lompe.
+    """
+
+    savefile = tempfile_path + \
+        event.replace('-', '') + '_ssies_f' + str(sat) + '.h5'
+    if os.path.exists(savefile):
+        print('File already exists')
+        return
+
+    date_str = event.replace('-', '')
+    year = event[:4]
+    url_base = "http://cedar.openmadrigal.org"
+    url = url_base + \
+        f"/ftp/fullname/{madrigal_kwargs['user_fullname']}/email/{madrigal_kwargs['user_email']}/affiliation/{madrigal_kwargs['user_affiliation']}/kinst/8100/year/{year}/"
+
+    response2 = requests.get(url)
+    soup2 = BeautifulSoup(response2.content, 'html.parser')
+    urls = [link.get('href') for link in soup2.find_all(
+        'a', href=True) if '/format/hdf5/' in link.get('href')]
+
+    # url_ion_drift = url_base + [a['href'] for a in soup2.find_all(
+    #     'a', href=True) if 'ion drift' in a.text and f'F{sat}' in a.text][0]
+    # url_plasma_temp = url_base + [a['href'] for a in soup2.find_all(
+    #     'a', href=True) if 'plasma temp' in a.text and f'F{sat}' in a.text][0]
+    url_flux_energy = url_base + [a['href'] for a in soup2.find_all(
+        'a', href=True) if 'flux/energy' in a.text and f'F{sat}' in a.text][0]
+
+    # downloading the ion drift file
+    flux_hdf5_file_url = url_flux_energy + 'format/hdf5/'
+    response2 = requests.get(flux_hdf5_file_url)
+    soup2 = BeautifulSoup(response2.content, 'html.parser')
+    url_target_file = url_base + [link.get('href') for link in soup2.find_all(
+        'a', href=True) if '/format/hdf5/fullFilename/' in link.get('href') and date_str in link.get('href')][0]
+
+    response = requests.get(url_target_file, stream=True)
+    # tempfile_path = '/Users/fasilkebede/Documents/'
+    filename = tempfile_path + url_target_file[-27:-1]
+    with open(filename, 'wb') as file:
+        for chunk in response.iter_content(chunk_size=65536):
+            if chunk:  # Filter out keep-alive new chunks
+                file.write(chunk)
+    return filename
