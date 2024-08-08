@@ -119,18 +119,18 @@ def download_dmsp_ssj(event, sat, tempfile_path='./', **madrigal_kwargs):
     Example usage:
         event = '2014-07-13'
         sat = 17
-        tempfile_path = '/Users/fasilkebede/Documents/'
+        tempfile_path = './'
         madrigal_kwargs = {'user_fullname': 'First','user_email': 'name@host.com', 'user_affiliation': 'University'}
 
     Returns:
         savefile(str):
-            Path to hdf-file containing SSIES data for Lompe.
+            Path to netCDF4-file containing SSJ data.
     """
 
-    savefile = tempfile_path + \
-        event.replace('-', '') + '_ssies_f' + str(sat) + '.h5'
+    savefile = tempfile_path + 'dms_' + \
+        event.replace('-', '') + '_' + str(sat) + 'e.001.nc'
     if os.path.exists(savefile):
-        print('File already exists')
+        print(f'File: {savefile} already exists')
         return
 
     date_str = event.replace('-', '')
@@ -142,7 +142,7 @@ def download_dmsp_ssj(event, sat, tempfile_path='./', **madrigal_kwargs):
     response2 = requests.get(url)
     soup2 = BeautifulSoup(response2.content, 'html.parser')
     urls = [link.get('href') for link in soup2.find_all(
-        'a', href=True) if '/format/hdf5/' in link.get('href')]
+        'a', href=True) if '/format/netCDF4/' in link.get('href')]
 
     # url_ion_drift = url_base + [a['href'] for a in soup2.find_all(
     #     'a', href=True) if 'ion drift' in a.text and f'F{sat}' in a.text][0]
@@ -152,15 +152,16 @@ def download_dmsp_ssj(event, sat, tempfile_path='./', **madrigal_kwargs):
         'a', href=True) if 'flux/energy' in a.text and f'F{sat}' in a.text][0]
 
     # downloading the ion drift file
-    flux_hdf5_file_url = url_flux_energy + 'format/hdf5/'
+    flux_hdf5_file_url = url_flux_energy + '/format/netCDF4/'
     response2 = requests.get(flux_hdf5_file_url)
     soup2 = BeautifulSoup(response2.content, 'html.parser')
     url_target_file = url_base + [link.get('href') for link in soup2.find_all(
-        'a', href=True) if '/format/hdf5/fullFilename/' in link.get('href') and date_str in link.get('href')][0]
+        'a', href=True) if '/format/netCDF4/fullFilename/' in link.get('href') and date_str in link.get('href')][0]
 
     response = requests.get(url_target_file, stream=True)
     # tempfile_path = '/Users/fasilkebede/Documents/'
-    filename = tempfile_path + url_target_file[-27:-1]
+    filename = (tempfile_path +
+                url_target_file[-27:-1]).replace('hdf5', 'nc').replace('F', '')
     with open(filename, 'wb') as file:
         for chunk in response.iter_content(chunk_size=65536):
             if chunk:  # Filter out keep-alive new chunks
